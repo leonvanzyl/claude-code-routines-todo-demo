@@ -9,6 +9,7 @@ interface ColumnProps {
   label: string;
   color: string;
   todos: Todo[];
+  totalCount?: number;
   onDrop: (todoId: string, status: Status) => void;
   onDelete: (id: string) => void;
   onEdit: (todo: Todo) => void;
@@ -19,10 +20,13 @@ export function Column({
   label,
   color,
   todos,
+  totalCount,
   onDrop,
   onDelete,
   onEdit,
 }: ColumnProps) {
+  const filtered = totalCount !== undefined;
+  const hiddenByFilter = filtered && todos.length === 0 && totalCount > 0;
   const [dragOver, setDragOver] = useState(false);
 
   return (
@@ -49,14 +53,21 @@ export function Column({
         style={{ backgroundColor: color }}
       >
         <h2 className="font-black text-lg tracking-tight">{label}</h2>
-        <span className="bg-white border-2 border-black rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shadow-[2px_2px_0px_0px_#1a1a1a]">
-          {todos.length}
+        <span
+          className="bg-white border-2 border-black rounded-full min-w-8 h-8 px-2 flex items-center justify-center font-bold text-sm shadow-[2px_2px_0px_0px_#1a1a1a]"
+          aria-label={
+            filtered
+              ? `${todos.length} of ${totalCount} matching`
+              : `${todos.length} items`
+          }
+        >
+          {filtered ? `${todos.length}/${totalCount}` : todos.length}
         </span>
       </div>
       <div className="flex-1 p-3 flex flex-col gap-3">
         {todos.length === 0 && (
           <p className="text-gray-400 text-sm text-center mt-8 font-medium">
-            Drop items here
+            {hiddenByFilter ? "No matches" : "Drop items here"}
           </p>
         )}
         {todos.map((todo) => (
