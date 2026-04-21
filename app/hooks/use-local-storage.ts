@@ -9,7 +9,11 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   useEffect(() => {
     const stored = localStorage.getItem(key);
     if (stored) {
-      setValue(JSON.parse(stored));
+      try {
+        setValue(JSON.parse(stored) as T);
+      } catch {
+        localStorage.removeItem(key);
+      }
     }
     setLoaded(true);
   }, [key]);
