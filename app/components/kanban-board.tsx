@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Todo, Priority, Status, COLUMNS } from "../types";
+import { Todo, Status, COLUMNS } from "../types";
 import { useLocalStorage } from "../hooks/use-local-storage";
 import { Column } from "./column";
-import { CreateTodoModal } from "./create-todo-modal";
+import { TodoModal, TodoFormData } from "./todo-modal";
 
 export function KanbanBoard() {
   const [todos, setTodos, loaded] = useLocalStorage<Todo[]>(
@@ -12,21 +12,39 @@ export function KanbanBoard() {
     []
   );
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 
-  const createTodo = (
-    title: string,
-    description: string,
-    priority: Priority
-  ) => {
-    const newTodo: Todo = {
-      id: crypto.randomUUID(),
-      title,
-      description,
-      priority,
-      status: "backlog",
-      createdAt: Date.now(),
-    };
-    setTodos((prev) => [...prev, newTodo]);
+  const openCreate = () => {
+    setEditingTodo(null);
+    setModalOpen(true);
+  };
+
+  const openEdit = (todo: Todo) => {
+    setEditingTodo(todo);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditingTodo(null);
+  };
+
+  const handleSubmit = (data: TodoFormData) => {
+    if (editingTodo) {
+      setTodos((prev) =>
+        prev.map((t) => (t.id === editingTodo.id ? { ...t, ...data } : t))
+      );
+    } else {
+      const newTodo: Todo = {
+        id: crypto.randomUUID(),
+        title: data.title,
+        description: data.description,
+        priority: data.priority,
+        status: "backlog",
+        createdAt: Date.now(),
+      };
+      setTodos((prev) => [...prev, newTodo]);
+    }
   };
 
   const moveTodo = (todoId: string, newStatus: Status) => {
@@ -57,7 +75,7 @@ export function KanbanBoard() {
             Kanban Board
           </h1>
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={openCreate}
             className="bg-[#c77dff] border-3 border-black rounded-lg px-5 py-2.5 font-bold text-base shadow-[4px_4px_0px_0px_#1a1a1a] hover:shadow-[2px_2px_0px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-[0px_0px_0px_0px_#1a1a1a] active:translate-x-[4px] active:translate-y-[4px] transition-all"
           >
             + New To-Do
@@ -76,15 +94,17 @@ export function KanbanBoard() {
               todos={todos.filter((t) => t.status === col.id)}
               onDrop={moveTodo}
               onDelete={deleteTodo}
+              onEdit={openEdit}
             />
           ))}
         </div>
       </main>
 
-      <CreateTodoModal
+      <TodoModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreate={createTodo}
+        onClose={closeModal}
+        onSubmit={handleSubmit}
+        todo={editingTodo}
       />
     </>
   );

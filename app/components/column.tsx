@@ -11,6 +11,7 @@ interface ColumnProps {
   todos: Todo[];
   onDrop: (todoId: string, status: Status) => void;
   onDelete: (id: string) => void;
+  onEdit: (todo: Todo) => void;
 }
 
 export function Column({
@@ -20,6 +21,7 @@ export function Column({
   todos,
   onDrop,
   onDelete,
+  onEdit,
 }: ColumnProps) {
   const [dragOver, setDragOver] = useState(false);
 
@@ -58,7 +60,12 @@ export function Column({
           </p>
         )}
         {todos.map((todo) => (
-          <TodoCard key={todo.id} todo={todo} onDelete={onDelete} />
+          <TodoCard
+            key={todo.id}
+            todo={todo}
+            onDelete={onDelete}
+            onEdit={onEdit}
+          />
         ))}
       </div>
     </div>
