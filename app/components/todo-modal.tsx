@@ -1,32 +1,54 @@
 "use client";
 
-import { useState } from "react";
-import { Priority } from "../types";
+import { useEffect, useState } from "react";
+import { Priority, Todo } from "../types";
 
-interface CreateTodoModalProps {
-  open: boolean;
-  onClose: () => void;
-  onCreate: (title: string, description: string, priority: Priority) => void;
+export interface TodoFormData {
+  title: string;
+  description: string;
+  priority: Priority;
 }
 
-export function CreateTodoModal({
-  open,
-  onClose,
-  onCreate,
-}: CreateTodoModalProps) {
+interface TodoModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (data: TodoFormData) => void;
+  todo?: Todo | null;
+}
+
+export function TodoModal({ open, onClose, onSubmit, todo }: TodoModalProps) {
+  const isEdit = !!todo;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
+
+  useEffect(() => {
+    if (!open) return;
+    setTitle(todo?.title ?? "");
+    setDescription(todo?.description ?? "");
+    setPriority(todo?.priority ?? "medium");
+  }, [open, todo]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
 
   if (!open) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    onCreate(title.trim(), description.trim(), priority);
-    setTitle("");
-    setDescription("");
-    setPriority("medium");
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) return;
+    onSubmit({
+      title: trimmedTitle,
+      description: description.trim(),
+      priority,
+    });
     onClose();
   };
 
@@ -34,6 +56,9 @@ export function CreateTodoModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={isEdit ? "Edit to-do" : "New to-do"}
     >
       <div className="absolute inset-0 bg-black/40" />
       <form
@@ -41,7 +66,9 @@ export function CreateTodoModal({
         onSubmit={handleSubmit}
         className="relative bg-white border-3 border-black rounded-xl shadow-[8px_8px_0px_0px_#1a1a1a] w-full max-w-md p-6 flex flex-col gap-4"
       >
-        <h2 className="font-black text-xl">New To-Do</h2>
+        <h2 className="font-black text-xl">
+          {isEdit ? "Edit To-Do" : "New To-Do"}
+        </h2>
 
         <div className="flex flex-col gap-1">
           <label htmlFor="title" className="font-bold text-sm">
@@ -113,7 +140,7 @@ export function CreateTodoModal({
             type="submit"
             className="flex-1 border-3 border-black rounded-lg py-2.5 font-bold bg-[#6bcbff] shadow-[3px_3px_0px_0px_#1a1a1a] hover:shadow-[1px_1px_0px_0px_#1a1a1a] hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
           >
-            Create
+            {isEdit ? "Save" : "Create"}
           </button>
         </div>
       </form>
